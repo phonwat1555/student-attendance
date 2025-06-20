@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกการเข้าเรียน - ปวช.ศูนย์ส่งเสริมการเรียนรู้อำเภอเมืองนครราชสีมา</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* TH Sarabun New Font Import */
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 1.5rem;
+        }
+        .header-soft-gradient {
+            background: linear-gradient(135deg, #a7b7ec 0%, #a48ad9 100%);
+        }
+        .btn-primary {
+            background-color: #6366f1;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover {
+            background-color: #4f46e5;
+            transform: translateY(-1px);
+        }
+        /* NEW Minimal Button Styles */
+        .btn-status {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            border-radius: 1rem;
+            border-width: 2px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease-in-out;
+            background-color: white;
+        }
+        .btn-status:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            color: white;
+        }
+        .btn-status svg {
+            width: 2.25rem;
+            height: 2.25rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease-in-out;
+        }
+        .btn-status:hover svg {
+            transform: scale(1.1);
+            color: white;
+        }
+        .status-present {
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+        .status-present:hover {
+            background-color: #2ecc71;
+        }
+        .status-late {
+            border-color: #f1c40f;
+            color: #f1c40f;
+        }
+        .status-late:hover {
+            background-color: #f1c40f;
+        }
+        .status-absent {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+        .status-absent:hover {
+            background-color: #e74c3c;
+        }
+        .status-leave {
+            border-color: #3498db;
+            color: #3498db;
+        }
+        .status-leave:hover {
+            background-color: #3498db;
+        }
+        .card {
+            background-color: white;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+        }
+        .input-field {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            width: 100%;
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        th, td {
+            border-bottom: 1px solid #f1f5f9;
+        }
+        th:first-child { border-top-left-radius: 0.75rem; }
+        th:last-child { border-top-right-radius: 0.75rem; }
+        tr:last-child td:first-child { border-bottom-left-radius: 0.75rem; }
+        tr:last-child td:last-child { border-bottom-right-radius: 0.75rem; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <div id="mainContent" class="container flex-grow">
+        <header class="header-soft-gradient text-white p-6 rounded-xl shadow-md mb-8">
+            <h1 class="text-3xl font-bold text-center mb-2">
+                ระบบบันทึกการเข้าเรียน 📚
+            </h1>
+            <p class="text-lg text-center opacity-90">
+                ปวช.ศูนย์ส่งเสริมการเรียนรู้อำเภอเมืองนครราชสีมา
+            </p>
+        </header>
+
+        <main>
+            <div id="loginPage" class="card p-8 max-w-md mx-auto mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+                    เข้าสู่ระบบบันทึกข้อมูล 🔑
+                </h2>
+
+                <div id="studentLoginSection" class="mb-8 p-4 border rounded-lg bg-indigo-50">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4 text-center">สำหรับนักเรียน 🧑‍🎓</h3>
+                    <div class="mb-4">
+                        <label for="studentIdLoginInput" class="block text-gray-700 text-sm font-bold mb-2">กรอกรหัสนักศึกษา:</label>
+                        <input type="text" id="studentIdLoginInput" placeholder="ใส่รหัสนักศึกษาของคุณ" class="input-field">
+                    </div>
+                    <button id="studentLoginButton" class="btn-primary w-full">เข้าสู่ระบบ (นักศึกษา)</button>
+                </div>
+
+                <!-- Link to show the teacher login form -->
+                <div id="teacherLoginToggle" class="text-center mt-6">
+                    <a href="#" id="showTeacherLoginLink" class="text-sm text-gray-600 hover:text-gray-900">เข้าสู่ระบบสำหรับคุณครู/เจ้าหน้าที่</a>
+                </div>
+                
+                <!-- Teacher Login Section is now hidden by default -->
+                <div id="teacherLoginSection" class="mt-8 p-4 border rounded-lg bg-gray-50 hidden">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4 text-center">สำหรับคุณครู 👨‍🏫</h3>
+                    <div class="mb-4">
+                        <label for="teacherUsernameInput" class="block text-gray-700 text-sm font-bold mb-2">รหัสผู้ใช้:</label>
+                        <input type="text" id="teacherUsernameInput" placeholder="รหัสผู้ใช้ครู" class="input-field">
+                    </div>
+                    <div id="teacherPasswordContainer" class="mb-6">
+                        <label for="teacherPasswordInput" class="block text-gray-700 text-sm font-bold mb-2">รหัสผ่าน:</label>
+                        <input type="password" id="teacherPasswordInput" placeholder="รหัสผ่านครู" class="input-field">
+                    </div>
+                    <button id="teacherLoginButton" class="btn-primary w-full">เข้าสู่ระบบ (เจ้าหน้าที่)</button>
+                </div>
+            </div>
+
+            <div id="homePage" class="card p-6 mb-8 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">แดชบอร์ดคุณครู 📊</h2>
+                    <div class="flex gap-2">
+                        <button id="refreshDataButtonHome" class="btn-primary flex items-center px-4 py-2 text-sm">รีเฟรช</button>
+                        <button id="logoutButtonTeacher" class="btn-primary flex items-center px-4 py-2 text-sm">ออกจากระบบ</button>
+                    </div>
+                </div>
+                <div class="mb-6 flex flex-col sm:flex-row items-center gap-4">
+                    <label for="summaryDateInput" class="text-lg font-semibold text-gray-700 whitespace-nowrap">เลือกวันที่สำหรับสรุป:</label>
+                    <input type="date" id="summaryDateInput" class="input-field max-w-xs sm:w-auto flex-grow">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6" id="attendanceSummary"></div>
+
+                <div class="mt-8 text-center">
+                     <button id="toggleManagementButton" class="btn-primary">จัดการข้อมูลนักศึกษา</button>
+                </div>
+                
+                <div id="studentManagementSection" class="mt-6 hidden">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 mt-8">ดูสถานะนักเรียนรายบุคคล 🧑‍💻</h3>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                        <input type="text" id="quickStudentIdSearchInput" placeholder="กรอกรหัสนักศึกษา" class="input-field flex-grow">
+                        <button id="quickStudentSearchButton" class="btn-primary w-full sm:w-auto">ดูสถานะนักเรียน</button>
+                    </div>
+                    <div id="quickStudentResultDisplay" class="card p-4 mb-6 hidden"></div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">รายชื่อนักศึกษาทั้งหมด 🔍</h3>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                        <input type="text" id="searchInput" placeholder="ค้นหาจากรหัสหรือชื่อ-สกุล" class="input-field flex-grow">
+                        <button id="searchButton" class="btn-primary w-full sm:w-auto">ค้นหา</button>
+                    </div>
+                    <div id="studentListContainer" class="max-h-96 overflow-y-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัส</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-สกุล</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะวันนี้</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ดำเนินการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-8 border-t pt-6 flex justify-center gap-4 flex-wrap">
+                    <button id="openLiveMonitorButton" class="btn-primary bg-red-600 hover:bg-red-700">เปิด Live Monitor</button>
+                    <button id="viewDailyRecordsButton" class="btn-primary">ประวัติการบันทึกทั้งหมด</button>
+                    <button id="exportDailySummaryButton" class="btn-primary">ส่งออกสรุป</button>
+                    <button id="saveDailySummaryToHistoryButton" class="btn-primary">บันทึกสรุป</button>
+                </div>
+            </div>
+            
+            <div id="studentDetailPage" class="card p-6 hidden">
+                <!-- Content for student detail page, will be populated by JS -->
+            </div>
+
+            <div id="dailyRecordsPage" class="card p-6 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <button id="backToHomeFromDailyRecordsButton" class="btn-primary flex items-center">กลับหน้าหลัก</button>
+                    <div class="flex gap-2">
+                        <button id="refreshDataButtonDailyRecords" class="btn-primary flex items-center px-4 py-2 text-sm">รีเฟรช</button>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">ประวัติการบันทึกข้อมูลประจำวัน 🗓️</h2>
+                <div class="mb-4 flex flex-col sm:flex-row items-center gap-4">
+                    <label for="dailyRecordDateInput" class="block text-gray-700 text-sm font-bold whitespace-nowrap">เลือกวันที่:</label>
+                    <input type="date" id="dailyRecordDateInput" class="input-field max-w-xs mx-auto mb-4 sm:mb-0">
+                    <button id="exportSpecificDailyRecordsButton" class="btn-primary w-full sm:w-auto">ส่งออกสำหรับวันนี้</button>
+                </div>
+                <div id="dailyRecordsContainer" class="max-h-96 overflow-y-auto rounded-lg border border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">วันที่</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">รหัส</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ชื่อ-สกุล</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">สถานะ</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyRecordsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+        <footer class="text-center py-6 text-gray-600 text-sm mt-8">
+            <p>ลิขสิทธิ์ &copy; 2025 นักพัฒนา : นายปัณณธร บุญเมธาภัทร</p>
+        </footer>
+    </div>
+    
+    <!-- Full Screen Live Monitor Page -->
+    <div id="liveMonitorPage" class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm p-4 sm:p-6 lg:p-8 hidden z-50">
+        <div class="bg-white rounded-2xl shadow-2xl h-full flex flex-col">
+            <header class="p-4 border-b flex justify-between items-center">
+                 <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                    </span>
+                    Live Monitor
+                </h2>
+                 <button id="backToHomeFromMonitorButton" class="btn-primary bg-gray-600 hover:bg-gray-700">กลับหน้าหลัก</button>
+            </header>
+            <div id="fullScreenMonitorBody" class="flex-grow p-2 overflow-y-auto">
+                 <!-- Content injected by JS -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Students Data
+        const students = [
+            { id: "67130492101", gender: "นาย", firstName: "อชิตพล", lastName: "เรืองราม" },
+            { id: "67130492102", gender: "นางสาว", firstName: "ชญาดา", lastName: "ห้อยพรมราช" },
+            { id: "67130492103", gender: "นางสาว", firstName: "อริส", lastName: "ทองดี" },
+            { id: "67130492105", gender: "นางสาว", firstName: "ปรียาพร", lastName: "นิสยันต์" },
+            { id: "67130492106", gender: "นาย", firstName: "เกียรติศักดิ์", lastName: "เชียงสวยจิก" },
+            { id: "67130492107", gender: "นางสาว", firstName: "กนิษฐา", lastName: "ปวงสุข" },
+            { id: "67130492108", gender: "นางสาว", firstName: "ดวงสุดา", lastName: "เนื้อนา" },
+            { id: "67130492109", gender: "นาง", firstName: "ฐิติพร", lastName: "สุคนธ์" },
+            { id: "67130492111", gender: "นางสาว", firstName: "ณัฐติยา", lastName: "ประชุมพันธุ์" },
+            { id: "67130492112", gender: "นางสาว", firstName: "นันธินีย์", lastName: "ตะนนท์" },
+            { id: "67130492113", gender: "นางสาว", firstName: "ธารา", lastName: "ฤทธิ์ชัยฤกษ์" },
+            { id: "67130492114", gender: "นางสาว", firstName: "ณัฐวรรณ", lastName: "ไทยมะณี" },
+            { id: "67130492115", gender: "นาย", firstName: "สิทธินนท์", lastName: "ศรีสังข์" },
+            { id: "67130492116", gender: "นางสาว", firstName: "ศศิรัตน์", lastName: "มูลกระโทก" },
+            { id: "67130492117", gender: "นาง", firstName: "อมรรัตน์", lastName: "ดำริการวิศาล" },
+            { id: "67130492118", gender: "นางสาว", firstName: "วริศรา", lastName: "ขันงูเหลือม" },
+            { id: "67130492119", gender: "นางสาว", firstName: "ตุ๊กติ๊ก", lastName: "มิมาซา" },
+            { id: "67130492120", gender: "นางสาว", firstName: "นุชจรินทร์", lastName: "กริดกระโทก" },
+            { id: "67130492121", gender: "นางสาว", firstName: "รัสสิตา", lastName: "เชาว์ขุนทด" },
+            { id: "67130492122", gender: "นางสาว", firstName: "สุภาพร", lastName: "โขสันเทียะ" },
+            { id: "67130492123", gender: "นางสาว", firstName: "รุ่งนภา", lastName: "ลาวงษา" },
+            { id: "67130492124", gender: "นางสาว", firstName: "มิ่งขวัญ", lastName: "รักษา" },
+            { id: "67130492125", gender: "นาย", firstName: "จิรศักดิ์", lastName: "จอมอุย" },
+            { id: "67130492126", gender: "นาย", firstName: "มานัฐชัย", lastName: "นัยบุรุษ" },
+            { id: "67130492128", gender: "นางสาว", firstName: "สุพัตรา", lastName: "กาฬจันโท" },
+            { id: "67130492129", gender: "นาย", firstName: "ธวัชชัย", lastName: "เครือวัลย์" },
+            { id: "67130492130", gender: "นางสาว", firstName: "สายฝน", lastName: "เขนสันเทียะ" },
+            { id: "67130492131", gender: "นางสาว", firstName: "ทิพย์เกสร", lastName: "ทิพย์ประเสริฐ" },
+            { id: "67130492132", gender: "นาย", firstName: "วิจัย", lastName: "หงษ์สุวรรณ" },
+            { id: "67130492133", gender: "นาย", firstName: "วรรธนัย", lastName: "พุทธิมา" },
+            { id: "67130492134", gender: "นาย", firstName: "อมรเทพ", lastName: "ดีสูงเนิน" },
+            { id: "67130492135", gender: "นางสาว", firstName: "กัลยกร", lastName: "ก้านกลาง" },
+            { id: "67130492136", gender: "นางสาว", firstName: "จารวี", lastName: "เนาว์สันเทียะ" },
+            { id: "67130492137", gender: "นาย", firstName: "วิโรจน์", lastName: "เตชะวัชรานุกูล" },
+            { id: "67130492138", gender: "นางสาว", firstName: "ปิยขวัญ", lastName: "พงศ์วิสิษฐ์" },
+            { id: "67130492140", gender: "นางสาว", firstName: "วรรณนภา", lastName: "สร้อยสวัสดิ์" },
+            { id: "67130492201", gender: "นางสาว", firstName: "ณัฐกมล", lastName: "สาพิมล" },
+            { id: "67130492202", gender: "นาย", firstName: "ภูตะวัน", lastName: "ประหยัดทรัพย์" },
+            { id: "67130492203", gender: "นางสาว", firstName: "วลัยลักษณ์", lastName: "อาศัยนา" },
+            { id: "67130492204", gender: "นางสาว", firstName: "ประภาพร", lastName: "เกลี้ยงโคกสูง" },
+            { id: "67130492205", gender: "นางสาว", firstName: "อรวรรณ", lastName: "ชอบด่านกลาง" },
+            { id: "67130492206", gender: "นางสาว", firstName: "อรัญญา", lastName: "ฉิมโพธิ์กลาง" },
+            { id: "67130492207", gender: "นางสาว", firstName: "กัญญารัตน์", lastName: "อ่อนบุตร" },
+            { id: "67130492208", gender: "นาย", firstName: "ปัณณธร", lastName: "บุญเมธาภัทร" },
+            { id: "67130492209", gender: "นาย", firstName: "ชินวัตร", lastName: "ปลั่งกลาง" },
+            { id: "67130492210", gender: "นางสาว", firstName: "กัญญา", lastName: "หนูแสง" },
+            { id: "67130492211", gender: "นางสาว", firstName: "รุ่งวิภารัตน์", lastName: "ทองเจริญธีธัช" },
+            { id: "67130492212", gender: "นาย", firstName: "จารุวัฒน์", lastName: "ไหนกระโทก" },
+            { id: "67130492213", gender: "นาย", firstName: "ทิชานนท์", lastName: "ฉันงูเหลือม" },
+            { id: "67130492214", gender: "นางสาว", firstName: "อรอนงค์", lastName: "จันทิมา" },
+            { id: "67130492215", gender: "นางสาว", firstName: "ขวัณฌพัสดร์", lastName: "จันทร์รอด" },
+            { id: "67130492216", gender: "นางสาว", firstName: "เกศริน", lastName: "ไพรกลาง" },
+            { id: "67130492217", gender: "นาย", firstName: "ศิวพงษ์", lastName: "เสพสวัสดิ์" },
+            { id: "67130492218", gender: "นาง", firstName: "วรรณษา", lastName: "ธงสันเทียะ" },
+            { id: "67130492225", gender: "นางสาว", firstName: "พิมพ์นภัส", lastName: "สัมพันธ์พจน์" },
+            { id: "67130492226", gender: "นางสาว", firstName: "วรรวิษา", lastName: "คาราวะ" },
+            { id: "67130492227", gender: "นาย", firstName: "สมบูรณ์", lastName: "เปลื้องกระโทก" },
+            { id: "67130492228", gender: "นางสาว", firstName: "ดวงใจ", lastName: "โจษกลาง" },
+            { id: "67130492229", gender: "นาย", firstName: "นันทวุฒิ", lastName: "คุ้มจันอัด" },
+            { id: "67130492230", gender: "นางสาว", firstName: "สุนิสา", lastName: "บุบผาชาติ" },
+            { id: "67130492231", gender: "นางสาว", firstName: "ธัญพัฒน์", lastName: "โชตินิภาเจริญสุข" },
+            { id: "67130492232", gender: "นางสาว", firstName: "ธัญญารัตน์", lastName: "กลมกระโทก" },
+            { id: "67130492233", gender: "นางสาว", firstName: "สุนิสา", lastName: "ปรอยโคกสูง" },
+            { id: "67130492234", gender: "นาย", firstName: "ศิวกร", lastName: "สอนหมวก" },
+            { id: "67130492235", gender: "นาย", firstName: "อภิชัย", lastName: "จุมพิฎกะพันธุ์" },
+            { id: "67130492236", gender: "นางสาว", firstName: "ชุติกาญจน์", lastName: "สุวรรณทา" },
+            { id: "67130492237", gender: "นางสาว", firstName: "รติรัตน์", lastName: "มีพวงผล" },
+            { id: "67130492238", gender: "นางสาว", firstName: "วิภาวรรณ", lastName: "แดนชัยภูมิ" },
+            { id: "67130492239", gender: "นางสาว", firstName: "สุพัตรา", lastName: "จอมสูงเนิน" },
+            { id: "67130492240", gender: "นาย", firstName: "กิตติพงษ์", lastName: "ด้วงเงิน" },
+            { id: "67130492301", gender: "นางสาว", firstName: "ศิริพันธุ์", lastName: "บุราญรมณ์" },
+            { id: "67130492302", gender: "นางสาว", firstName: "ภัณฑิรา", lastName: "ประสานทรัพย์" },
+            { id: "67130492303", gender: "นางสาว", firstName: "รุ่งทิวา", lastName: "ชื่นแช่ม" },
+            { id: "67130492304", gender: "นางสาว", firstName: "วารุณี", lastName: "พงษ์พันนา" },
+            { id: "67130492305", gender: "นางสาว", firstName: "สุชัญญา", lastName: "วรรธยาวรกิต" },
+            { id: "67130492307", gender: "นาย", firstName: "วรินทร", lastName: "ปีจัตุรัส" },
+            { id: "67130492308", gender: "นางสาว", firstName: "มลฤทัย", lastName: "ว่าความดี" },
+            { id: "67130492309", gender: "นางสาว", firstName: "ปราณี", lastName: "พงษ์สระพัง" },
+            { id: "67130492310", gender: "นาย", firstName: "สิทธิศักดิ์", lastName: "ไปล่กระโทก" },
+            { id: "67130492312", gender: "นางสาว", firstName: "ศศิวรรณ", lastName: "บุญศรี" },
+            { id: "67130492313", gender: "นางสาว", firstName: "บุญประสพ", lastName: "หมอกขุนทด" },
+            { id: "67130492314", gender: "นาย", firstName: "อนุชา", lastName: "นัดกระโทก" },
+            { id: "67130492315", gender: "นาย", firstName: "ภาณุวัฒน์", lastName: "ศรีแก้วน้ำใส" },
+            { id: "67130492316", gender: "นางสาว", firstName: "ปุญญิศา", lastName: "ชาอินทร์" }
+        ];
+
+        let currentStudent = null, attendanceData = [], attendanceChartInstance, currentUserRole = null, currentUserId = null, dailyRecordsIntervalId, liveMonitorIntervalId;
+
+        const dom = {
+            loginPage: document.getElementById('loginPage'),
+            homePage: document.getElementById('homePage'),
+            studentDetailPage: document.getElementById('studentDetailPage'),
+            dailyRecordsPage: document.getElementById('dailyRecordsPage'),
+            liveMonitorPage: document.getElementById('liveMonitorPage'),
+            mainContent: document.getElementById('mainContent'),
+            
+            studentIdLoginInput: document.getElementById('studentIdLoginInput'),
+            studentLoginButton: document.getElementById('studentLoginButton'),
+            teacherUsernameInput: document.getElementById('teacherUsernameInput'),
+            teacherPasswordInput: document.getElementById('teacherPasswordInput'),
+            teacherLoginButton: document.getElementById('teacherLoginButton'),
+
+            summaryDateInput: document.getElementById('summaryDateInput'),
+            attendanceSummary: document.getElementById('attendanceSummary'),
+            
+            toggleManagementButton: document.getElementById('toggleManagementButton'),
+            studentManagementSection: document.getElementById('studentManagementSection'),
+            quickStudentIdSearchInput: document.getElementById('quickStudentIdSearchInput'),
+            quickStudentSearchButton: document.getElementById('quickStudentSearchButton'),
+            quickStudentResultDisplay: document.getElementById('quickStudentResultDisplay'),
+            searchInput: document.getElementById('searchInput'),
+            searchButton: document.getElementById('searchButton'),
+            studentsTableBody: document.getElementById('studentsTableBody'),
+
+            openLiveMonitorButton: document.getElementById('openLiveMonitorButton'),
+            backToHomeFromMonitorButton: document.getElementById('backToHomeFromMonitorButton'),
+            fullScreenMonitorBody: document.getElementById('fullScreenMonitorBody'),
+
+            viewDailyRecordsButton: document.getElementById('viewDailyRecordsButton'),
+            exportDailySummaryButton: document.getElementById('exportDailySummaryButton'),
+            saveDailySummaryToHistoryButton: document.getElementById('saveDailySummaryToHistoryButton'),
+
+            logoutButtonTeacher: document.getElementById('logoutButtonTeacher'),
+            refreshDataButtonHome: document.getElementById('refreshDataButtonHome'),
+            
+            backToHomeFromDailyRecordsButton: document.getElementById('backToHomeFromDailyRecordsButton'),
+            refreshDataButtonDailyRecords: document.getElementById('refreshDataButtonDailyRecords'),
+            dailyRecordDateInput: document.getElementById('dailyRecordDateInput'),
+            exportSpecificDailyRecordsButton: document.getElementById('exportSpecificDailyRecordsButton'),
+            dailyRecordsTableBody: document.getElementById('dailyRecordsTableBody'),
+        };
+
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwFPdlzuzBjGRZFKDNtAYV1mK87l2hviKp_Pp_99mtfrcrecR8MJovCrIsZtEDaWeIX/exec';
+
+        const formatDate = (date) => {
+            const d = new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+        const formatDisplayDate = (date) => {
+            const d = new Date(date);
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        };
+
+        const getStatusDetails = (status) => {
+            switch (status) {
+                case 'มาเรียน': return { icon: '✅', badgeClass: 'bg-green-100 text-green-800' };
+                case 'มาสาย': return { icon: '⚠️', badgeClass: 'bg-yellow-100 text-yellow-800' };
+                case 'ขาดเรียน': return { icon: '❌', badgeClass: 'bg-red-100 text-red-800' };
+                case 'ลา': return { icon: '📝', badgeClass: 'bg-blue-100 text-blue-800' };
+                default: return { icon: '❓', badgeClass: 'bg-gray-100 text-gray-800' };
+            }
+        };
+
+        const stopAllIntervals = () => {
+            if (dailyRecordsIntervalId) clearInterval(dailyRecordsIntervalId);
+            if (liveMonitorIntervalId) clearInterval(liveMonitorIntervalId);
+            dailyRecordsIntervalId = null;
+            liveMonitorIntervalId = null;
+            console.log("All intervals stopped.");
+        };
+        
+        const showPage = (pageId) => {
+            stopAllIntervals();
+            const pages = ['loginPage', 'homePage', 'studentDetailPage', 'dailyRecordsPage', 'liveMonitorPage'];
+            pages.forEach(p => {
+                const pageElement = document.getElementById(p);
+                if (p === pageId) {
+                    pageElement.classList.remove('hidden');
+                } else {
+                    pageElement.classList.add('hidden');
+                }
+            });
+            dom.mainContent.style.display = (pageId === 'liveMonitorPage') ? 'none' : 'block';
+        };
+
+        const handleLogin = (role, id) => {
+            currentUserRole = role;
+            currentUserId = id;
+            sessionStorage.setItem('currentUserRole', role);
+            sessionStorage.setItem('currentUserId', id);
+            if (role === 'teacher') {
+                showTeacherHomePage();
+                Swal.fire('เข้าสู่ระบบสำเร็จ!', 'ยินดีต้อนรับคุณครู ✅', 'success');
+            } else {
+                 const student = students.find(s => s.id === id);
+                 if(student) showStudentDetailPage(student);
+                 else handleLogout();
+            }
+        };
+
+        const handleLogout = () => {
+            currentUserRole = null;
+            currentUserId = null;
+            sessionStorage.clear();
+            
+            // --- MODIFICATION: Clear the student ID input field ---
+            dom.studentIdLoginInput.value = '';
+
+            showPage('loginPage');
+            Swal.fire('ออกจากระบบ', 'คุณออกจากระบบเรียบร้อยแล้ว', 'info');
+        };
+
+        function showTeacherHomePage() {
+            showPage('homePage');
+            loadAttendanceData(updateAllHomePageComponents);
+        }
+        
+        function showLiveMonitorPage() {
+            showPage('liveMonitorPage');
+            loadAttendanceData(() => {
+                renderFullScreenMonitor(dom.summaryDateInput.value);
+                liveMonitorIntervalId = setInterval(() => {
+                    console.log("Auto-refreshing Live Monitor silently...");
+                    loadAttendanceData(() => renderFullScreenMonitor(dom.summaryDateInput.value), false);
+                }, 5000);
+            });
+        }
+        
+        function showStudentDetailPage(student) {
+            stopAllIntervals();
+            currentStudent = student;
+            const studentDetailPage = dom.studentDetailPage;
+            studentDetailPage.innerHTML = `
+                <div class="flex justify-end items-center mb-6">
+                     <button id="logoutButtonStudent" class="btn-primary flex items-center px-4 py-2 text-sm bg-gray-500 hover:bg-gray-600">ออกจากระบบ</button>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">บันทึกการเข้าเรียน 📝</h2>
+                <div class="mb-6 bg-indigo-50 p-4 rounded-lg text-center">
+                    <p class="text-2xl text-gray-700">
+                        <span class="font-semibold">รหัส:</span> <span class="text-indigo-700 font-bold">${student.id}</span>
+                    </p>
+                    <p class="text-2xl text-gray-700 mt-2">
+                        <span class="font-semibold">ชื่อ:</span> <span class="text-indigo-700 font-bold">${student.gender} ${student.firstName} ${student.lastName}</span>
+                    </p>
+                </div>
+                <div class="mb-6 text-center">
+                    <p class="text-lg text-gray-600 mb-2">เลือกวันที่: <span id="currentDateDisplay" class="font-semibold text-gray-800"></span></p>
+                    <input type="date" id="attendanceDateInput" class="input-field max-w-xs mx-auto mb-4">
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                        <button class="btn-status status-present" data-status="มาเรียน">
+                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                           <span>มาเรียน</span>
+                        </button>
+                         <button class="btn-status status-late" data-status="มาสาย">
+                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" /></svg>
+                            <span>มาสาย</span>
+                        </button>
+                         <button class="btn-status status-absent" data-status="ขาดเรียน">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                           <span>ขาดเรียน</span>
+                        </button>
+                         <button class="btn-status status-leave" data-status="ลา">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>
+                            <span>ลา</span>
+                        </button>
+                    </div>
+                </div>`;
+            showPage('studentDetailPage');
+            
+            const attendanceDateInput = document.getElementById('attendanceDateInput');
+            const currentDateDisplay = document.getElementById('currentDateDisplay');
+            const today = formatDate(new Date());
+            attendanceDateInput.value = today;
+            currentDateDisplay.textContent = formatDisplayDate(new Date());
+
+            document.getElementById('logoutButtonStudent').addEventListener('click', handleLogout);
+            
+            document.querySelectorAll('.btn-status').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const statusText = event.currentTarget.dataset.status;
+                    if (!currentStudent) return;
+                    saveAttendance(currentStudent.id, `${currentStudent.gender} ${currentStudent.firstName} ${currentStudent.lastName}`, document.getElementById('attendanceDateInput').value, statusText);
+                });
+            });
+        }
+
+        function showDailyRecordsPage() {
+            showPage('dailyRecordsPage');
+            const today = formatDate(new Date());
+            dom.dailyRecordDateInput.value = today;
+            loadAttendanceData(() => {
+                displayDailyRecords(today);
+                dailyRecordsIntervalId = setInterval(() => {
+                    console.log("Auto-refreshing Daily Records silently...");
+                    loadAttendanceData(() => displayDailyRecords(dom.dailyRecordDateInput.value), false);
+                }, 5000);
+            });
+        }
+
+        function renderFullScreenMonitor(selectedDate) {
+            const recordsForDate = attendanceData.filter(r => r.date === selectedDate).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+            dom.fullScreenMonitorBody.innerHTML = '';
+            if(recordsForDate.length === 0) {
+                dom.fullScreenMonitorBody.innerHTML = `<div class="flex items-center justify-center h-full"><p class="text-gray-500 text-xl">ยังไม่มีนักเรียนบันทึกข้อมูล</p></div>`;
+                return;
+            }
+            const list = document.createElement('ul');
+            list.className = 'divide-y divide-gray-100';
+            recordsForDate.forEach(record => {
+                const statusDetails = getStatusDetails(record.status);
+                const listItem = document.createElement('li');
+                listItem.className = 'p-4 flex items-center justify-between hover:bg-gray-50 transition-colors duration-200';
+                listItem.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="text-3xl mr-4">${statusDetails.icon}</span>
+                        <div>
+                            <p class="text-xl font-bold text-gray-800">${record.fullName}</p>
+                            <p class="text-md text-gray-500">${new Date(record.timestamp).toLocaleTimeString('th-TH')}</p>
+                        </div>
+                    </div>
+                    <span class="px-4 py-2 text-md font-bold rounded-full ${statusDetails.badgeClass}">${record.status}</span>
+                `;
+                list.appendChild(listItem);
+            });
+            dom.fullScreenMonitorBody.appendChild(list);
+        }
+
+        function updateAllHomePageComponents() {
+            const selectedDate = dom.summaryDateInput.value;
+            updateDailySummary(selectedDate);
+            if (!dom.studentManagementSection.classList.contains('hidden')) {
+                displayStudents(students, selectedDate);
+            }
+        }
+
+        function displayStudents(studentArray, selectedDate) {
+            dom.studentsTableBody.innerHTML = '';
+            if (studentArray.length === 0) {
+                dom.studentsTableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">ไม่พบนักศึกษา</td></tr>`;
+                return;
+            }
+            studentArray.forEach(student => {
+                const studentStatusToday = attendanceData.find(r => r.studentId === student.id && r.date === selectedDate);
+                const statusText = studentStatusToday ? studentStatusToday.status : "ไม่บันทึกข้อมูล";
+                const { badgeClass } = getStatusDetails(statusText); 
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4">${student.id}</td>
+                    <td class="px-6 py-4">${student.gender} ${student.firstName} ${student.lastName}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${badgeClass}">${statusText}</span></td>
+                    <td class="px-6 py-4"><button data-student-id="${student.id}" class="select-student-btn text-indigo-600 hover:text-indigo-900 font-semibold">เลือก</button></td>
+                `;
+                dom.studentsTableBody.appendChild(row);
+            });
+
+            document.querySelectorAll('.select-student-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    if (currentUserRole !== 'teacher') return;
+                    const student = students.find(s => s.id === event.target.dataset.studentId);
+                    if (student) showStudentDetailPage(student);
+                });
+            });
+        }
+
+        function displayDailyRecords(date) {
+            dom.dailyRecordsTableBody.innerHTML = '';
+            const recordsForDate = attendanceData.filter(record => record.date === date).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            if (recordsForDate.length === 0) {
+                dom.dailyRecordsTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">ไม่พบข้อมูล</td></tr>`;
+                return;
+            }
+            recordsForDate.forEach(record => {
+                const { badgeClass } = getStatusDetails(record.status);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4">${formatDisplayDate(record.date)}</td>
+                    <td class="px-6 py-4">${record.studentId}</td>
+                    <td class="px-6 py-4">${record.fullName}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${badgeClass}">${record.status}</span></td>
+                    <td class="px-6 py-4"><button data-student-id="${record.studentId}" data-full-name="${record.fullName}" data-record-date="${record.date}" data-current-status="${record.status}" class="edit-daily-record-btn text-blue-600 hover:text-blue-900 font-semibold">แก้ไข</button></td>
+                `;
+                dom.dailyRecordsTableBody.appendChild(row);
+            });
+            
+            document.querySelectorAll('.edit-daily-record-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const { studentId, fullName, recordDate, currentStatus } = event.target.dataset;
+                    Swal.fire({
+                        title: 'แก้ไขสถานะการเข้าเรียน',
+                        html: `<b>${fullName}</b><br>วันที่: ${formatDisplayDate(recordDate)}`,
+                        input: 'select',
+                        inputOptions: { 'มาเรียน': 'มาเรียน', 'มาสาย': 'มาสาย', 'ขาดเรียน': 'ขาดเรียน', 'ลา': 'ลา' },
+                        inputValue: currentStatus,
+                        showCancelButton: true,
+                        confirmButtonText: 'บันทึก',
+                        cancelButtonText: 'ยกเลิก',
+                        preConfirm: (newStatus) => {
+                            if (!newStatus || newStatus === currentStatus) {
+                                Swal.showValidationMessage('กรุณาเลือกสถานะใหม่ที่ไม่ซ้ำกับสถานะเดิม');
+                                return false;
+                            }
+                            saveAttendance(studentId, fullName, recordDate, newStatus, true, currentStatus);
+                        }
+                    });
+                });
+            });
+        }
+        
+        function updateDailySummary(selectedDate) {
+            const summaryCounts = { 'มาเรียน': 0, 'มาสาย': 0, 'ขาดเรียน': 0, 'ลา': 0, 'ไม่บันทึกข้อมูล': 0, 'รวมทั้งหมด': students.length };
+            students.forEach(student => {
+                const record = attendanceData.find(r => r.studentId === student.id && r.date === selectedDate);
+                summaryCounts[record ? record.status : 'ไม่บันทึกข้อมูล']++;
+            });
+            dom.attendanceSummary.innerHTML = `
+                <div class="card p-4 text-center"><p>ทั้งหมด</p><p class="text-2xl font-bold">${summaryCounts['รวมทั้งหมด']}</p></div>
+                <div class="card p-4 text-center"><p>มาเรียน</p><p class="text-2xl font-bold text-green-600">${summaryCounts['มาเรียน']}</p></div>
+                <div class="card p-4 text-center"><p>มาสาย</p><p class="text-2xl font-bold text-yellow-600">${summaryCounts['มาสาย']}</p></div>
+                <div class="card p-4 text-center"><p>ขาดเรียน</p><p class="text-2xl font-bold text-red-600">${summaryCounts['ขาดเรียน']}</p></div>
+                <div class="card p-4 text-center"><p>ลา</p><p class="text-2xl font-bold text-blue-600">${summaryCounts['ลา']}</p></div>`;
+        }
+        
+        function loadAttendanceData(callback = () => {}, showLoadingIndicator = true) {
+            if (showLoadingIndicator) Swal.fire({ title: 'กำลังโหลดข้อมูล...', didOpen: () => Swal.showLoading(), timer: 15000, allowOutsideClick: false });
+            const callbackName = 'gasResponseLoad_' + Date.now();
+            window[callbackName] = function(response) {
+                if (showLoadingIndicator) Swal.close();
+                if (response && response.data) {
+                    attendanceData = response.data.map(record => ({ ...record, date: formatDate(new Date(record.date)) }));
+                    callback();
+                } else if (showLoadingIndicator) {
+                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error');
+                }
+                const scriptTag = document.getElementById('gasScript_' + callbackName);
+                if (scriptTag) scriptTag.remove();
+                delete window[callbackName];
+            };
+            const url = `${SCRIPT_URL}?action=get&callback=${callbackName}`;
+            const script = document.createElement('script');
+            script.src = url;
+            script.id = 'gasScript_' + callbackName;
+            document.body.appendChild(script);
+        }
+        
+        function saveAttendance(studentId, fullName, date, status, isUpdate = false, originalStatus = '') {
+            Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            const callbackName = 'gasResponseSave_' + Date.now();
+            let queryParams = isUpdate ? new URLSearchParams({ action: 'update', studentId, fullName, date, newStatus: status, originalStatus }) : new URLSearchParams({ action: 'add', studentId, fullName, date, status });
+            const url = `${SCRIPT_URL}?${queryParams.toString()}&callback=${callbackName}`;
+            
+            window[callbackName] = function(response) {
+                const scriptTag = document.getElementById('gasScript_' + callbackName);
+                if (scriptTag) scriptTag.remove();
+                delete window[callbackName];
+
+                if (response.result === 'success') {
+                    if(currentUserRole === 'student'){
+                        const successText = `บันทึกข้อมูลสำเร็จ! <br>
+                            <div class='text-left mt-4'>
+                                <strong>ชื่อ-สกุล:</strong> ${fullName}<br>
+                                <strong>วันที่:</strong> ${formatDisplayDate(date)}<br>
+                                <strong>สถานะ:</strong> ${status}
+                            </div>`;
+                        Swal.fire({
+                            icon: 'success', title: 'บันทึกสำเร็จ', html: successText, confirmButtonText: 'ตกลง'
+                        }).then(handleLogout);
+                    } else {
+                         Swal.fire('สำเร็จ!', isUpdate ? 'แก้ไขข้อมูลเรียบร้อย' : 'บันทึกข้อมูลเรียบร้อย', 'success').then(() => {
+                            if (currentStudent && !dom.studentDetailPage.classList.contains('hidden')) {
+                                loadAttendanceData(() => showStudentDetailPage(currentStudent));
+                            } else if (!dom.dailyRecordsPage.classList.contains('hidden')) {
+                               loadAttendanceData(() => showDailyRecordsPage());
+                            } else {
+                                 loadAttendanceData(showTeacherHomePage);
+                            }
+                        });
+                    }
+                } else {
+                    Swal.fire('ข้อผิดพลาด!', response.error || 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+                }
+            };
+            const script = document.createElement('script');
+            script.src = url;
+            script.id = 'gasScript_' + callbackName;
+            document.body.appendChild(script);
+        }
+
+        function renderAttendanceHistory(studentId) {
+            const tableBody = document.getElementById('attendanceHistoryTableBody');
+            if(!tableBody) return;
+            tableBody.innerHTML = '';
+            const studentRecords = attendanceData.filter(record => record.studentId === studentId).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (studentRecords.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">ยังไม่มีประวัติการบันทึก</td></tr>`;
+                return;
+            }
+
+            studentRecords.forEach(record => {
+                const { badgeClass } = getStatusDetails(record.status);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDisplayDate(record.date)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs font-semibold rounded-full ${badgeClass}">${record.status}</span></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right"><button data-record-date="${record.date}" data-current-status="${record.status}" class="edit-record-btn text-blue-600 hover:text-blue-900 font-semibold">แก้ไข</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            document.querySelectorAll('.edit-record-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const { recordDate, currentStatus } = event.target.dataset;
+                    Swal.fire({
+                        title: 'แก้ไขสถานะการเข้าเรียน',
+                        input: 'select',
+                        inputOptions: { 'มาเรียน': 'มาเรียน', 'มาสาย': 'มาสาย', 'ขาดเรียน': 'ขาดเรียน', 'ลา': 'ลา' },
+                        inputValue: currentStatus,
+                        showCancelButton: true,
+                        confirmButtonText: 'บันทึก',
+                        cancelButtonText: 'ยกเลิก',
+                        preConfirm: (newStatus) => {
+                            if (!newStatus || newStatus === currentStatus) {
+                                Swal.showValidationMessage('กรุณาเลือกสถานะใหม่ที่ไม่ซ้ำกับสถานะเดิม');
+                                return false;
+                            }
+                            saveAttendance(currentStudent.id, `${currentStudent.gender} ${currentStudent.firstName} ${currentStudent.lastName}`, recordDate, newStatus, true, currentStatus);
+                        }
+                    });
+                });
+            });
+        }
+        
+        function updateAttendanceChart(studentId) {
+            const chartCanvas = document.getElementById('attendanceChart');
+            if (!chartCanvas) return;
+
+            if (attendanceChartInstance) {
+                attendanceChartInstance.destroy();
+            }
+            
+            const studentRecords = attendanceData.filter(record => record.studentId === studentId);
+            const statusCounts = { 'มาเรียน': 0, 'มาสาย': 0, 'ขาดเรียน': 0, 'ลา': 0 };
+            studentRecords.forEach(record => {
+                if (statusCounts.hasOwnProperty(record.status)) {
+                    statusCounts[record.status]++;
+                }
+            });
+
+            const data = {
+                labels: ['มาเรียน', 'มาสาย', 'ขาดเรียน', 'ลา'],
+                datasets: [{
+                    label: 'จำนวนครั้ง',
+                    data: [statusCounts['มาเรียน'], statusCounts['มาสาย'], statusCounts['ขาดเรียน'], statusCounts['ลา']],
+                    backgroundColor: ['#34d399', '#fcd34d', '#ef4444', '#60a5fa'],
+                    borderColor: ['#ffffff'],
+                    borderWidth: 2
+                }]
+            };
+            const config = {
+                type: 'pie', data,
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { family: 'Sarabun' } } },
+                        title: { display: true, text: 'สรุปสถานะการเข้าเรียน', font: { size: 18, family: 'Sarabun' } }
+                    }
+                }
+            };
+            attendanceChartInstance = new Chart(chartCanvas.getContext('2d'), config);
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for existing session
+            const storedUserRole = sessionStorage.getItem('currentUserRole');
+            const storedUserId = sessionStorage.getItem('currentUserId');
+            if (storedUserRole && storedUserId) {
+                handleLogin(storedUserRole, storedUserId);
+            } else {
+                showPage('loginPage');
+            }
+            
+            // --- NEW: Logic to show teacher login section on click ---
+            const showTeacherLoginLink = document.getElementById('showTeacherLoginLink');
+            const teacherLoginSection = document.getElementById('teacherLoginSection');
+            const teacherLoginToggle = document.getElementById('teacherLoginToggle');
+
+            showTeacherLoginLink.addEventListener('click', (event) => {
+                event.preventDefault(); // Prevent link from navigating
+                teacherLoginSection.classList.remove('hidden'); // Show the teacher login form
+                teacherLoginToggle.classList.add('hidden');     // Hide the link itself
+            });
+        });
+
+        dom.studentLoginButton.addEventListener('click', () => {
+            const student = students.find(s => s.id === dom.studentIdLoginInput.value.trim());
+            if (student) handleLogin('student', student.id);
+            else Swal.fire('เข้าสู่ระบบไม่สำเร็จ', 'ไม่พบรหัสนักศึกษา', 'error');
+        });
+        dom.studentIdLoginInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') dom.studentLoginButton.click();
+        });
+
+
+        dom.teacherLoginButton.addEventListener('click', () => {
+            if(dom.teacherUsernameInput.value.trim() === 'teacher' && dom.teacherPasswordInput.value.trim() === 'password') {
+                handleLogin('teacher', 'teacher');
+            } else {
+                Swal.fire('เข้าสู่ระบบไม่สำเร็จ', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
+            }
+        });
+        
+        dom.logoutButtonTeacher.addEventListener('click', handleLogout);
+        dom.refreshDataButtonHome.addEventListener('click', () => loadAttendanceData(updateAllHomePageComponents));
+        dom.openLiveMonitorButton.addEventListener('click', showLiveMonitorPage);
+        dom.backToHomeFromMonitorButton.addEventListener('click', showTeacherHomePage);
+        dom.viewDailyRecordsButton.addEventListener('click', showDailyRecordsPage);
+        dom.backToHomeFromDailyRecordsButton.addEventListener('click', showTeacherHomePage);
+        
+        dom.toggleManagementButton.addEventListener('click', () => {
+            dom.studentManagementSection.classList.toggle('hidden');
+            const isHidden = dom.studentManagementSection.classList.contains('hidden');
+            dom.toggleManagementButton.textContent = isHidden ? 'แสดงส่วนจัดการข้อมูลนักศึกษา' : 'ซ่อนส่วนจัดการข้อมูลนักศึกษา';
+            if(!isHidden) displayStudents(students, dom.summaryDateInput.value);
+        });
+
+        dom.summaryDateInput.addEventListener('change', () => {
+            loadAttendanceData(updateAllHomePageComponents);
+        });
+        
+        dom.searchButton.addEventListener('click', () => {
+            const query = dom.searchInput.value.toLowerCase();
+            const filteredStudents = students.filter(s =>
+                s.id.includes(query) || `${s.firstName} ${s.lastName}`.toLowerCase().includes(query)
+            );
+            displayStudents(filteredStudents, dom.summaryDateInput.value); 
+        });
+
+        dom.exportSpecificDailyRecordsButton.addEventListener('click', () => {
+            const dateToExport = dom.dailyRecordDateInput.value;
+            const recordsToExport = attendanceData.filter(record => record.date === dateToExport);
+
+            if (recordsToExport.length === 0) {
+                Swal.fire('ไม่มีข้อมูล', `ไม่มีข้อมูลการบันทึกสำหรับวันที่ ${formatDisplayDate(dateToExport)} เพื่อส่งออก`, 'info');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "วันที่,รหัสนักศึกษา,ชื่อ-สกุล,สถานะ\n";
+
+            recordsToExport.forEach(record => {
+                const row = [formatDisplayDate(record.date), record.studentId, `"${record.fullName}"`, record.status].join(",");
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `บันทึกประจำวัน_${dateToExport}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+    </script>
+</body>
+</html>
